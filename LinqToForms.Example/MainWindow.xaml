@@ -1,0 +1,9 @@
+﻿<Window x:Class="LinqToForms.Example.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="350" Width="525">
+   <StackPanel>
+      <Button Content="Show Company Form" Click="OnShowCompanyForm" />
+      <Button Content="Show User Form" Click="OnShowUserForm" />
+   </StackPanel>
+</Window>

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqToForms", "LinqToForms\LinqToForms.csproj", "{83A7B68B-3B5A-4645-AB2D-008A3B1EA7E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqToForms.Example", "LinqToForms.Example\LinqToForms.Example.csproj", "{52BF83F9-C01C-4582-8D5B-09436DCB1423}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{52BF83F9-C01C-4582-8D5B-09436DCB1423}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52BF83F9-C01C-4582-8D5B-09436DCB1423}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52BF83F9-C01C-4582-8D5B-09436DCB1423}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52BF83F9-C01C-4582-8D5B-09436DCB1423}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83A7B68B-3B5A-4645-AB2D-008A3B1EA7E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83A7B68B-3B5A-4645-AB2D-008A3B1EA7E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83A7B68B-3B5A-4645-AB2D-008A3B1EA7E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83A7B68B-3B5A-4645-AB2D-008A3B1EA7E2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
