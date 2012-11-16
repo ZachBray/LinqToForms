@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="LinqToForms : Library for composing WPF forms with validation using LINQ in C#." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>LinqToForms</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ZachBray/LinqToForms">View on GitHub</a>
+
+          <h1 id="project_title">LinqToForms</h1>
+          <h2 id="project_tagline">Library for composing WPF forms with validation using LINQ in C#.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ZachBray/LinqToForms/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ZachBray/LinqToForms/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>LinqToForms</h1>
+
+<h2>Overview</h2>
+
+<ul>
+<li>LinqToForms is a <em>library</em> for composing <a href="http://en.wikipedia.org/wiki/Windows_Presentation_Foundation">WPF</a> forms using <a href="http://msdn.microsoft.com/en-us/library/bb397926.aspx">LINQ</a>.</li>
+<li>It only helps you build a <code>ViewModel</code>. It doesn't generate a <code>View</code>. Although this is something you could easily do yourself.</li>
+<li>It works with <a href="http://msdn.microsoft.com/en-us/library/ms752059.aspx">XAML</a>.</li>
+<li>It is a <em>toy</em> project and hasn't been well tested yet.</li>
+</ul><h2>Goals</h2>
+
+<ul>
+<li>To make the construction of forms using <a href="http://en.wikipedia.org/wiki/Model_View_ViewModel">MVVM</a> feel more natural.</li>
+<li>To simplify <code>ViewModel</code> validation logic by removing things like mutable state.</li>
+<li>To make it possible to compose forms.</li>
+</ul><h2>Structure</h2>
+
+<h4>Formlets</h4>
+
+<p>Tomas Petricek wrote a great blog entry <a href="http://tomasp.net/blog/formlets-in-linq.aspx">here</a> on <em>formlets</em>. The basic idea is that <em>a formlet represents part of a form</em>. For example, a text field or an address section. Also, <em>a formlet can include other formlets</em>. For example, a company formlet might include an address formlet.</p>
+
+<h6>Construction and validation</h6>
+
+<p>The code below demonstrates how you might construct an address formlet with LinqToForms.</p>
+
+<pre><code>  public IFormlet&lt;Address&gt; Create()
+  {
+     var postCodeRegex = new Regex(@"[A-Za-z]+[0-9]+\s+[0-9]+[A-Za-z]+");
+
+     return from firstLine in Formlet.Text("First Line")
+            from secondLine in Formlet.Text("Second Line")
+            from postCode in Formlet.Text("Post Code")
+            where firstLine != ""
+            where secondLine != ""
+            where postCodeRegex.IsMatch(postCode)
+            select new Address(firstLine, secondLine, postCode);
+  }
+</code></pre>
+
+<p>In the first three lines from the <code>return</code> statement we declare some text fields that should be available on the address form using the <code>from</code> operation. We pass a <code>string</code> into the <code>Fomlet.Text(string id)</code> method for each field. Later we will use these <code>string</code> values as keys into a dictionary of fields so that we can interact with the form from XAML.</p>
+
+<p>The lines starting with <code>where</code> clauses constitute the validation logic for the formlet. Here we check that the "First Line" and "Second Line" fields are filled and that the "Post Code" field matches a regular expression.</p>
+
+<h6>Composition</h6>
+
+<p>The code below demonstrates how you might construct a company formlet that makes use of the address formlet above.</p>
+
+<pre><code>  public IFormlet&lt;Company&gt; Create()
+  {
+     return from name in Formlet.Text("Name")
+            from address in new AddressFormletFactory().Create()
+            where name != ""
+            select new Company(name, address);
+  }
+</code></pre>
+
+<p>Once again we declare a field, "Name", that we expect in the form. In the following line we use the <code>from</code> operation again but this time to import a child formlet and all of its validation logic. The <code>address</code> variable has the type <code>Address</code> and it is used in the construction of a new <code>Company</code> instance.</p>
+
+<p><strong>Note: At present, LinqToForms only supports <code>where</code> clauses after all fields have been declared.</strong> This includes where clauses in child formlets. This needs to be fixed. It limits composability.</p>
+
+<h4>Forms and ViewModels</h4>
+
+<p>The value of a formlet changes over time. More specifically, it changes when the user updates a field in the form. Furthermore, any change in a child formlet propagates to its parents. For example, when a user changes the "First Line" field in the "Address Section" the address formlet produces a new <code>Address</code> instance if it passes validation. This new <code>Address</code> causes the company formlet to produce a new <code>Company</code> instance with an updated <code>Address</code> field.</p>
+
+<p>A <code>Form</code> is wrapper around a formlet. It listens to the formlet values over time and provides a command for submitting the current value of the formlet. This command is only executable when the formlet passes validation. It also exposes a dictionary from identifier to form field. This allows the view to interact with the form values.</p>
+
+<p>Below is an example of a form for the company formlet.</p>
+
+<pre><code>class CompanyForm : Form&lt;Company&gt;
+{
+    public CompanyForm(string submitAction, Action&lt;Company&gt; onSubmit, Action onCancel) 
+     : base(submitAction, onSubmit, onCancel)
+    {
+        Definition = new CompanyFormletFactory().Create();
+    }
+}
+</code></pre>
+
+<p>We assign the formlet to the <code>Definition</code> property of the <code>Form</code> sub type. In the constructor of <code>Form</code> we pass in several arguments. The <code>submitAction</code> argument is the label we give the submit button on the form, e.g., "Update Company" or "Add Company". The <code>onSubmit</code> argument is a continuation for when the user submits a validated form.</p>
+
+<h4>Views</h4>
+
+<h6>Text field bindings</h6>
+
+<pre><code>    &lt;Label Grid.Column="0"&gt;Name&lt;/Label&gt;
+    &lt;TextBox Grid.Column="1" Text="{Binding Fields[Name].Value, Mode=TwoWay}" /&gt;
+</code></pre>
+
+<ul>
+<li>
+<code>Name</code> is the identifier provided in the formlet for the field.</li>
+</ul><h6>Int/decimal field bindings</h6>
+
+<pre><code>    &lt;Label Grid.Column="0"&gt;Age&lt;/Label&gt;
+    &lt;xctk:IntegerUpDown Grid.Column="1"
+        Value="{Binding Fields[Age].Value, Mode=TwoWay}" 
+        Increment="{Binding Fields[Age].Stepping}" 
+        Maximum="{Binding Fields[Age].MaxValue}" 
+        Minimum="{Binding Fields[Age].MinValue}" /&gt;
+</code></pre>
+
+<ul>
+<li>
+<code>Age</code> is the identifier provided in the formlet for the field.</li>
+<li>The initial <code>Value</code>, <code>Stepping</code>, <code>Minimum</code> and <code>Maximum</code> can be defined in the formlet. See the <code>UserFormletFactory</code> in the example project.</li>
+</ul><h6>Other field bindings</h6>
+
+<p>Feel free to add more and send us a pull request.</p>
+
+<h2>Gotchas</h2>
+
+<ul>
+<li>Where clause problem. See <strong>bold</strong> note above.</li>
+<li>Identifier re-use (in child formlets) is not supported.</li>
+<li>Probably some other stuff too!</li>
+</ul><h2>Copyright and license</h2>
+
+<p>Copyright 2012 Zachary Bray. </p>
+
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at</p>
+
+<pre><code>   http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+
+<p>Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">LinqToForms maintained by <a href="https://github.com/ZachBray">ZachBray</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-36398955-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
